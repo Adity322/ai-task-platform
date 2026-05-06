@@ -1,0 +1,91 @@
+services:
+  # MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
+  # Redis
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+
+  # Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://root:rootpassword@mongodb:27017/ai-task-platform?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - PORT=8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - app-network
+
+  # Worker
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: worker
+    restart: unless-stopped
+    env_file:
+      - ./worker/.env
+    environment:
+      - MONGO_URI=mongodb://root:rootpassword@mongodb:27017/ai-task-platform?authSource=admin
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - app-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api
+    container_name: frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  app-network:
+    driver: bridge
