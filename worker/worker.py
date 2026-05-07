@@ -4,6 +4,8 @@ from bson.objectid import ObjectId
 from dotenv import load_dotenv
 import os
 import time
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 load_dotenv()
 
@@ -21,6 +23,22 @@ redis_client = redis.from_url(
     os.getenv("REDIS_URL"),
     decode_responses=True
 )
+
+# Simple health check server so Render doesn't complain
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Worker is running")
+    def log_message(self, format, *args):
+        pass  # Suppress logs
+
+def start_health_server():
+    server = HTTPServer(("0.0.0.0", 8001), HealthHandler)
+    server.serve_forever()
+
+# Start health server in background thread
+threading.Thread(target=start_health_server, daemon=True).start()
 
 print("Worker started...")
 
@@ -40,19 +58,16 @@ def process_task(operation, text):
 # Worker loop
 while True:
     print("Waiting for tasks...")
-    # Blocking pop from Redis queue
     queue_data = redis_client.brpop("taskQueue")
     task_id = queue_data[1]
     print(f"Processing task: {task_id}")
     try:
-        # Find task
         task = tasks_collection.find_one({
             "_id": ObjectId(task_id)
         })
         if not task:
             print("Task not found")
             continue
-        # Update status -> running
         tasks_collection.update_one(
             {"_id": ObjectId(task_id)},
             {
@@ -60,14 +75,11 @@ while True:
                 "$push": {"logs": "Task started"}
             }
         )
-        # Simulate processing
         time.sleep(2)
-        # Process task
         result = process_task(
             task["operation"],
             task["inputText"]
         )
-        # Update success
         tasks_collection.update_one(
             {"_id": ObjectId(task_id)},
             {
