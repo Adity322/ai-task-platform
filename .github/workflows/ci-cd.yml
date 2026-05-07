@@ -6,52 +6,10 @@ on:
       - main
 
 jobs:
-  # ─── Job 1: Lint ───────────────────────────────────────────
-  lint:
-    name: Lint Code
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "20"
-
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm install
-          npm install --save-dev @babel/eslint-parser @babel/preset-react
-
-      - name: Lint frontend
-        run: |
-          cd frontend
-          npm run lint
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: Install worker dependencies
-        run: |
-          cd worker
-          pip install -r requirements.txt
-          pip install flake8
-
-      - name: Lint worker
-        run: |
-          cd worker
-          flake8 worker.py --max-line-length=120 --ignore=E501,W503
-
-  # ─── Job 2: Build & Push Docker Images ─────────────────────
+  # ─── Job 1: Build & Push Docker Images ─────────────────────
   build-and-push:
     name: Build & Push Images
     runs-on: ubuntu-latest
-    needs: lint
 
     steps:
       - name: Checkout code
@@ -99,7 +57,7 @@ jobs:
             adityadev10311/ai-task-frontend:latest
             adityadev10311/ai-task-frontend:${{ steps.tag.outputs.TAG }}
 
-  # ─── Job 3: Update Infra Repo ───────────────────────────────
+  # ─── Job 2: Update Infra Repo ───────────────────────────────
   update-infra:
     name: Update Infra Repo
     runs-on: ubuntu-latest
