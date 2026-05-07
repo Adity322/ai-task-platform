@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getTasksAPI } from "../api/tasks";
 import Navbar from "../components/Navbar";
 import TaskCard from "../components/TaskCard";
@@ -11,20 +11,20 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       const res = await getTasksAPI();
       setTasks(res.data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to fetch tasks");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [fetchTasks]);
 
   const handleTaskCreated = (newTask) => {
     setTasks((prev) => [newTask, ...prev]);
@@ -35,7 +35,6 @@ const Dashboard = () => {
       <Navbar />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Page Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-white">My Tasks</h1>
@@ -52,7 +51,6 @@ const Dashboard = () => {
           </button>
         </div>
 
-        {/* Task List */}
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <p className="text-gray-500 text-sm">Loading tasks...</p>
@@ -77,7 +75,6 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <CreateTaskModal
           onClose={() => setShowModal(false)}
