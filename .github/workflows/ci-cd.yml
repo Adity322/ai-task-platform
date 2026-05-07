@@ -24,6 +24,7 @@ jobs:
         run: |
           cd frontend
           npm install
+          npm install --save-dev @babel/eslint-parser @babel/preset-react
 
       - name: Lint frontend
         run: |
