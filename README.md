@@ -8,6 +8,12 @@ Backend url:https://ai-task-platform-viyg.onrender.com
 
 Demo video link:https://drive.google.com/file/d/1MKo51Av2o0dE60rZXiswLvCSkpopwNOC/view?usp=share_link
 
+Infra repo link:https://github.com/Adity322/ai-task-infra
+
+Docker hub:https://hub.docker.com/u/adityadev10311
+
+Architecture Document link: https://drive.google.com/file/d/1e_A8O0YaIySZaIi7HqTjgsuEB-KwArX_/view?usp=share_link
+
 ---
 
 
