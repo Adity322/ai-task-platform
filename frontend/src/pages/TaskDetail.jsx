@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getTaskByIdAPI } from "../api/tasks";
 import Navbar from "../components/Navbar";
@@ -13,32 +13,31 @@ const TaskDetail = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchTask = async (isRefresh = false) => {
+  const fetchTask = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     try {
       const res = await getTaskByIdAPI(id);
       setTask(res.data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to fetch task");
       navigate("/dashboard");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [id, navigate]);
 
   useEffect(() => {
     fetchTask();
-  }, [id]);
+  }, [fetchTask]);
 
-  // Auto-refresh if task is pending or running
   useEffect(() => {
     if (!task) return;
     if (task.status === "pending" || task.status === "running") {
       const interval = setInterval(() => fetchTask(), 3000);
       return () => clearInterval(interval);
     }
-  }, [task?.status]);
+  }, [task, fetchTask]);
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -66,7 +65,6 @@ const TaskDetail = () => {
       <Navbar />
 
       <div className="max-w-3xl mx-auto px-6 py-8">
-        {/* Back Button */}
         <button
           onClick={() => navigate("/dashboard")}
           className="flex items-center gap-2 text-gray-400 hover:text-white text-sm mb-6 transition"
@@ -75,7 +73,6 @@ const TaskDetail = () => {
           Back to Dashboard
         </button>
 
-        {/* Task Header */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-4">
           <div className="flex items-start justify-between gap-4 mb-4">
             <h1 className="text-white font-bold text-xl">{task.title}</h1>
@@ -86,10 +83,7 @@ const TaskDetail = () => {
                 className="text-gray-500 hover:text-white transition"
                 title="Refresh"
               >
-                <RefreshCw
-                  size={15}
-                  className={refreshing ? "animate-spin" : ""}
-                />
+                <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} />
               </button>
             </div>
           </div>
@@ -108,7 +102,6 @@ const TaskDetail = () => {
           </div>
         </div>
 
-        {/* Input Text */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <FileText size={15} className="text-gray-400" />
@@ -119,7 +112,6 @@ const TaskDetail = () => {
           </p>
         </div>
 
-        {/* Result */}
         {task.result && (
           <div className="bg-gray-900 border border-green-500/20 rounded-2xl p-6 mb-4">
             <div className="flex items-center gap-2 mb-3">
@@ -132,7 +124,6 @@ const TaskDetail = () => {
           </div>
         )}
 
-        {/* Pending / Running State */}
         {(task.status === "pending" || task.status === "running") && (
           <div className="bg-gray-900 border border-blue-500/20 rounded-2xl p-6 mb-4">
             <div className="flex items-center gap-3">
@@ -146,7 +137,6 @@ const TaskDetail = () => {
           </div>
         )}
 
-        {/* Logs */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-3">
             <Terminal size={15} className="text-gray-400" />
